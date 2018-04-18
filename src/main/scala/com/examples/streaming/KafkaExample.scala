@@ -1,10 +1,11 @@
 package com.examples.streaming
 
 import org.apache.spark.SparkConf
+import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.functions._
-
+import org.apache.spark.mllib.stat.{MultivariateStatisticalSummary, Statistics}
 import org.apache.spark.sql.streaming.OutputMode
 
 
@@ -35,24 +36,24 @@ object KafkaExample extends App {
   // Register the DataFrame as a temporary view
 //  dataS.createOrReplaceTempView("lags")
 //  val lagsDF = sessionSpark.sql("SELECT * FROM lags")
-//  lagsDF.map(r => r(0))
 
-  val lagsSchema = new StructType()
+  val lagsSchema: StructType = new StructType()
     .add("topic", StringType)
     .add("lag", LongType)
     .add("time", TimestampType)
 
 
-  val dataJson = dfKafkaSource
+  val dataJson: DataFrame = dfKafkaSource
 //    .select(col("value").cast("string"))
-    .select(from_json(col("value").cast("string"), lagsSchema) as "json")
-    .select("json.*")
+    .select(from_json(col("value").cast("string"), lagsSchema) as "jsonEvent")
+    .select("jsonEvent.*")
 //    .select("topic", "lag", "time")
 
-  val values = dataS
+  val values: DataFrame = dataS
 //    .select('value.cast("string"))
-   .select(from_json('value, lagsSchema).alias("event"))
-   .select("event.*")
+    .select(from_json('value, lagsSchema).alias("jsonEvent"))
+    .select("jsonEvent.*")
+
 
 
   val query = values.writeStream
@@ -61,6 +62,17 @@ object KafkaExample extends App {
     .outputMode(OutputMode.Append())
     .format("console")
     .start()
+
+//  val dataRDDvect = values
+//    .rdd
+//    .map{
+//      row => Vectors.dense(row.getAs[Seq[Double]]("lag").toArray)
+//    }
+//
+//  val summary: MultivariateStatisticalSummary = Statistics.colStats(dataRDDvect)
+//  println(summary.mean) // a dense vector containing the mean value for each column
+//  println(summary.variance) // column-wise variance
+//  println(summary.numNonzeros)
 
 
   query.awaitTermination()
