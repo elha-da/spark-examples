@@ -1,10 +1,11 @@
 package com.examples.avroToparquet
 
 
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.SparkConf
 import com.databricks.spark.avro._
-
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.{ArrayType, StringType, StructType, DataType}
+import org.apache.spark.sql.functions._
 
 object demoJson {
 
@@ -77,20 +78,69 @@ object demoJson {
     val dfAvro = spark
       .read
       .format("com.databricks.spark.avro")
-      .load("./resources/episodes.avro")
+      .load("src/main//resources/episodes.avro")
 
     dfAvro.show()
 
 //    dfAvro.filter("doctor > 5")
 //      .write
-//      .parquet("./resources/episodes.parquet")
-//      .avro("./resources/episodes5.avro")
+//      .parquet("src/main/resources/episodes.parquet")
+//      .avro("src/main/resources/episodes5.avro")
 
     val dfParquet = spark
       .read
-      .parquet("./resources/episodes.parquet")
+      .parquet("src/main//resources/episodes.parquet")
 
     dfParquet.show()
+
+    // *********************************** StringJson to DF *********************************** //
+    import spark.implicits._
+
+    val addressesSchema = new StructType()
+      .add("city", StringType)
+      .add("state", StringType)
+      .add("zip", StringType)
+
+    val schema = new StructType()
+      .add("firstName", StringType)
+      .add("lastName", StringType)
+      .add("email", StringType)
+      .add("addresses", ArrayType(addressesSchema))
+
+    schema.printTreeString
+
+//    val schemaAsJson = schema.json
+//    println(schemaAsJson)
+//    println(schema.prettyJson)
+
+
+    val rowJsonDF = Seq("""
+        {
+          "firstName" : "Jacek",
+          "lastName" : "Laskowski",
+          "email" : "jacek@japila.pl",
+          "addresses" : [
+            {
+              "city" : "Warsaw",
+              "state" : "N/A",
+              "zip" : "02-791"
+            }
+          ]
+        }
+      """).toDF("rawjson")
+
+//    val dt = DataType.fromJson(schemaAsJson)
+//    println(dt.sql)
+
+    val people = rowJsonDF
+      .select(from_json($"rawjson", schema) as "json")
+      .select("json.*") // <-- flatten the struct field
+      .withColumn("address", explode($"addresses")) // <-- explode the array field
+      .drop("addresses") // <-- no longer needed
+      .select("firstName", "lastName", "email", "address.*") // <-- flatten the struct field
+
+    people.show
+
   }
 
 }
