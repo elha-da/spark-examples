@@ -47,7 +47,7 @@ object KafkaExample extends App {
 //    .select(col("value").cast("string"))
     .select(from_json(col("value").cast("string"), lagsSchema) as "json")
     .select("json.*")
-    .select("topic", "lag", "time")
+//    .select("topic", "lag", "time")
 
   val values = dataS
 //    .select('value.cast("string"))

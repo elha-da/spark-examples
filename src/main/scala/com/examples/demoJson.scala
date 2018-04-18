@@ -4,7 +4,7 @@ package com.examples.avroToparquet
 import com.databricks.spark.avro._
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.{ArrayType, StringType, StructType, DataType}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
 
 object demoJson {
@@ -93,6 +93,9 @@ object demoJson {
 
     dfParquet.show()
 
+//  val primitiveDS: Dataset[Int] = Seq(1, 2, 3).toDS()
+//  primitiveDS.map(_ + 1).collect()
+
     // *********************************** StringJson to DF *********************************** //
     import spark.implicits._
 
@@ -104,6 +107,7 @@ object demoJson {
     val schema = new StructType()
       .add("firstName", StringType)
       .add("lastName", StringType)
+      .add("age", IntegerType)
       .add("email", StringType)
       .add("addresses", ArrayType(addressesSchema))
 
@@ -113,11 +117,11 @@ object demoJson {
 //    println(schemaAsJson)
 //    println(schema.prettyJson)
 
-
     val rowJsonDF = Seq("""
         {
           "firstName" : "Jacek",
           "lastName" : "Laskowski",
+          "age" : 32,
           "email" : "jacek@japila.pl",
           "addresses" : [
             {
@@ -133,11 +137,15 @@ object demoJson {
 //    println(dt.sql)
 
     val people = rowJsonDF
-      .select(from_json($"rawjson", schema) as "json")
+      .select($"rawjson")
+//      .select(from_json($"rawjson", schema) as "json")
+      .select(from_json(col("rawjson"), schema) as "json")
       .select("json.*") // <-- flatten the struct field
-      .withColumn("address", explode($"addresses")) // <-- explode the array field
+      .withColumn("address", explode(col("addresses"))) // <-- explode the array field
+//      .select("firstName", "lastName", "age", "email", "address.*") // <-- flatten the struct field
+      .select("*", "address.*") // <-- flatten the struct field
       .drop("addresses") // <-- no longer needed
-      .select("firstName", "lastName", "email", "address.*") // <-- flatten the struct field
+      .drop("address") // <-- no longer needed
 
     people.show
 
