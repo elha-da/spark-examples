@@ -15,11 +15,11 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-mllib" % sparkVersion,
   "org.apache.spark" %% "spark-streaming" % sparkVersion,
 //  "org.apache.spark" %% "spark-hive" % sparkVersion,
-//  "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkVersion,
+  "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkVersion,
   "io.circe" %% "circe-parser" % circeVersion,
   "com.databricks" %% "spark-avro" % "3.0.0",
   "mysql" % "mysql-connector-java" % "5.1.6",
-  "org.lz4" % "lz4-java" % "1.4.0"
+  "org.lz4" % "lz4-java" % "1.4.1"
 )
 
 

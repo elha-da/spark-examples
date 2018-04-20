@@ -10,7 +10,7 @@ import org.apache.spark.mllib.stat.{MultivariateStatisticalSummary, Statistics}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.mllib.linalg._
 import org.apache.spark.sql.functions._
-
+import org.apache.spark.streaming._
 
 object MLlibrairie extends App {
 
@@ -79,7 +79,7 @@ object MLlibrairie extends App {
   /**
     * Summary statistics
     */
-  val observations= sc.parallelize(
+  val observations: RDD[Vector] = sc.parallelize(
     Seq(
       Vectors.dense(1.0, 10.0, 100.0),
       Vectors.dense(2.0, 20.0, 200.0),
@@ -143,6 +143,7 @@ object MLlibrairie extends App {
   ((2018, 12, 12, 13, 13, 15), 8),
   ((2018, 12, 12, 13, 13, 16), 4),
   ((2018, 12, 12, 13, 13, 17), 4),
+
   ((2018, 8,  13, 0, 0, 0), 10),
   ((2018, 5,  27, 0, 0, 0), 15))
     .map { case ((yy, mm, dd, h, m, s), a) => (LocalDateTime.of(yy, mm, dd, h, m, s), a) }
